@@ -1,5 +1,6 @@
 import numpy as np
 import copy
+import json
 
 from ase import Atoms
 
@@ -7,6 +8,7 @@ from Code.BoundingBox import BoundingBox
 from Code.CuttingPlaneUtilities import CuttingPlane
 from Code.IndexedAtoms import IndexedAtoms
 from Code.NeighborList import NeighborList
+from Code.FCCLattice import FCCLattice
 
 
 class BaseNanoparticle:
@@ -27,6 +29,37 @@ class BaseNanoparticle:
             self.neighbor_list = neighbor_list()
 
         self.construct_bounding_box()
+
+    def save(self, filename):
+        data = dict()
+        lattice_data = dict()
+        lattice_data['width'] = self.lattice.width
+        lattice_data['length'] = self.lattice.length
+        lattice_data['height'] = self.lattice.height
+        lattice_data['lattice_constant'] = self.lattice.lattice_constant
+
+        data['lattice'] = lattice_data
+        data['energies'] = self.energies
+
+        atom_indices = self.atoms.get_indices()
+        corresponding_symbols = [self.atoms.get_symbol(index) for index in atom_indices]
+
+        data['atoms'] = {'indices' : atom_indices, 'symbols' : corresponding_symbols}
+        with open(filename + '.pcl', 'w') as file:
+            json.dump(data, file)
+
+    def load(self, filename):
+        with open(filename, 'r') as file:
+            file_string = file.read()
+            data = json.loads(file_string)
+
+        lattice_data = data['lattice']
+        self.lattice = FCCLattice(lattice_data['width'], lattice_data['length'], lattice_data['height'], lattice_data['lattice_constant'])
+        self.neighbor_list = NeighborList(self.lattice)
+
+        self.energies = data['energies']
+        self.atoms.add_atoms(zip(data['atoms']['indices'], data['atoms']['symbols']))
+        self.neighbor_list.construct(data['atoms']['indices'])
 
     def add_atoms(self, atoms):
         self.atoms.add_atoms(atoms)

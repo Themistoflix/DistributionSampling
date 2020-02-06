@@ -65,7 +65,7 @@ class GPRCalculator(EnergyCalculator):
 
 
 class MixingEnergyCalculator(EnergyCalculator):
-    def __init__(self, mixing_parameters=None):
+    def __init__(self, mixing_parameters=None, fmax=None, steps=None):
         EnergyCalculator.__init__(self)
 
         if mixing_parameters is None:
@@ -73,7 +73,7 @@ class MixingEnergyCalculator(EnergyCalculator):
         else:
             self.mixing_parameters = mixing_parameters
 
-        self.emt_calculator = EMTCalculator()
+        self.emt_calculator = EMTCalculator(fmax=fmax, steps=steps)
         self.energy_key = 'Mixing Energy'
 
     def compute_mixing_parameters(self, particle, symbols):
