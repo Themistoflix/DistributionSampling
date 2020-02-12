@@ -65,7 +65,7 @@ class GPRCalculator(EnergyCalculator):
 
 
 class MixingEnergyCalculator(EnergyCalculator):
-    def __init__(self, mixing_parameters=None, fmax=None, steps=None):
+    def __init__(self, mixing_parameters=None, fmax=0.05, steps=20):
         EnergyCalculator.__init__(self)
 
         if mixing_parameters is None:

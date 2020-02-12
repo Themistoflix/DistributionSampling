@@ -30,7 +30,7 @@ class BaseNanoparticle:
 
         self.construct_bounding_box()
 
-    def save(self, filename):
+    def get_dictionary_description(self):
         data = dict()
         lattice_data = dict()
         lattice_data['width'] = self.lattice.width
@@ -44,22 +44,29 @@ class BaseNanoparticle:
         atom_indices = self.atoms.get_indices()
         corresponding_symbols = [self.atoms.get_symbol(index) for index in atom_indices]
 
-        data['atoms'] = {'indices' : atom_indices, 'symbols' : corresponding_symbols}
+        data['atoms'] = {'indices': atom_indices, 'symbols': corresponding_symbols}
+
+        return data
+
+    def save(self, filename):
+        data = self.get_dictionary_description()
         with open(filename + '.pcl', 'w') as file:
             json.dump(data, file)
+
+    def build_from_dictionary_descriptions(self, dictionary):
+        lattice_data = dictionary['lattice']
+        self.lattice = FCCLattice(lattice_data['width'], lattice_data['length'], lattice_data['height'], lattice_data['lattice_constant'])
+        self.neighbor_list = NeighborList(self.lattice)
+
+        self.energies = dictionary['energies']
+        self.atoms.add_atoms(zip(dictionary['atoms']['indices'], dictionary['atoms']['symbols']))
+        self.neighbor_list.construct(dictionary['atoms']['indices'])
 
     def load(self, filename):
         with open(filename, 'r') as file:
             file_string = file.read()
-            data = json.loads(file_string)
-
-        lattice_data = data['lattice']
-        self.lattice = FCCLattice(lattice_data['width'], lattice_data['length'], lattice_data['height'], lattice_data['lattice_constant'])
-        self.neighbor_list = NeighborList(self.lattice)
-
-        self.energies = data['energies']
-        self.atoms.add_atoms(zip(data['atoms']['indices'], data['atoms']['symbols']))
-        self.neighbor_list.construct(data['atoms']['indices'])
+            dictionary = json.loads(file_string)
+        self.build_from_dictionary_descriptions(dictionary)
 
     def add_atoms(self, atoms):
         self.atoms.add_atoms(atoms)
